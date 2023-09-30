@@ -1,3 +1,3 @@
 # components
-Components library inspired by HTDP book
+Components library inspired by HTDP book  
 License: MIT
