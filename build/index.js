@@ -19,72 +19,80 @@ var component = function component(initialState, render, _ref) {
     _ref$triggerEvent = _ref.triggerEvent,
     triggerEvent = _ref$triggerEvent === void 0 ? false : _ref$triggerEvent;
   var state = initialState;
-  var redraw = function redraw(mounted, newState) {
+  var root;
+  var updateRoot = function updateRoot(newRoot) {
+    root = newRoot;
+  };
+  var redraw = function redraw(newState) {
     var rendered = draw(newState);
-    if (mounted.nodeName !== rendered.nodeName) {
-      mounted.replaceWith(rendered);
-      return rendered;
+    if (root.nodeName !== rendered.nodeName) {
+      root.replaceWith(rendered);
+      updateRoot(rendered);
     } else {
-      mounted.querySelectorAll(".component").forEach(function (mounted) {
-        mounted.unmount(mounted, mounted.handler);
-        mounted.handler = undefined;
-        mounted.mount = undefined;
-        mounted.unmount = undefined;
+      root.querySelectorAll(".component").forEach(function (component) {
+        component.unmount(component.eventHandler);
+        component.updateRoot = undefined;
+        component.eventHandler = undefined;
+        component.mount = undefined;
+        component.unmount = undefined;
       });
-      (0, _morphdom["default"])(mounted, rendered.cloneNode(true));
+      (0, _morphdom["default"])(root, rendered.cloneNode(true));
       var components = rendered.querySelectorAll(".component");
-      mounted.querySelectorAll(".component").forEach(function (mounted, index) {
-        mounted.handler = components[index].mount(mounted);
-        mounted.mount = components[index].mount;
-        mounted.unmount = components[index].unmount;
+      root.querySelectorAll(".component").forEach(function (component, index) {
+        component.updateRoot = components[index].updateRoot;
+        component.eventHandler = components[index].eventHandler;
+        component.mount = components[index].mount;
+        component.unmount = components[index].unmount;
+        component.updateRoot(component);
+        component.mount(component.eventHandler);
       });
-      return mounted;
     }
   };
-  var maybeDispatchEvent = function maybeDispatchEvent(node, oldState) {
+  var maybeDispatchEvent = function maybeDispatchEvent(oldState) {
     if (triggerEvent) {
       var event = triggerEvent(oldState, state);
       if (event) {
-        node.dispatchEvent(event);
+        root.dispatchEvent(event);
       }
     }
   };
-  var handler = function handler(event) {
+  var maybeStateChanged = function maybeStateChanged(newState) {
+    if (newState !== state) {
+      redraw(newState);
+      var oldState = state;
+      state = newState;
+      maybeDispatchEvent(oldState);
+    }
+  };
+  var eventHandler = function eventHandler(event) {
     if (!events.hasOwnProperty(event.type)) {
       return;
     }
     event.preventDefault();
     event.stopImmediatePropagation();
-    var newState = events[event.type](state, event);
-    if (newState !== state) {
-      var node = redraw(this, newState);
-      var oldState = state;
-      state = newState;
-      maybeDispatchEvent(node, oldState);
-    }
+    maybeStateChanged(events[event.type](state, event));
   };
-  var mount = function mount(node) {
-    var h = handler.bind(node);
+  var mount = function mount(eventHandler) {
     for (var event in events) {
       if (events.hasOwnProperty(event)) {
-        var target = is_global_event(event) ? window : node;
-        target.addEventListener(event, h, true);
+        var target = is_global_event(event) ? window : root;
+        target.addEventListener(event, eventHandler, true);
       }
     }
-    return h;
   };
-  var unmount = function unmount(node, handler) {
+  var unmount = function unmount(eventHandler) {
     for (var event in events) {
       if (events.hasOwnProperty(event)) {
-        var target = is_global_event(event) ? window : node;
-        target.removeEventListener(event, handler, true);
+        var target = is_global_event(event) ? window : root;
+        target.removeEventListener(event, eventHandler, true);
       }
     }
   };
   var draw = function draw(state) {
     var rendered = render(state);
     rendered.classList.add("component");
-    rendered.handler = mount(rendered);
+    rendered.eventHandler = eventHandler;
+    rendered.updateRoot = updateRoot;
     rendered.mount = mount;
     rendered.unmount = unmount;
     return rendered;
@@ -95,7 +103,9 @@ var component = function component(initialState, render, _ref) {
     if (state !== newState) {
       state = newState;
     }
-    return draw(state);
+    updateRoot(draw(state));
+    mount(eventHandler);
+    return root;
   };
 };
 var _default = component;

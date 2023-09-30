@@ -10,51 +10,69 @@ const component = (
     {
         events = { },
         updateOptions = ( state, options ) => state,
-        triggerEvent = false
+        triggerEvent = false,
     }
 ) => {
     let state = initialState;
+    let root;
 
-    const redraw = ( mounted, newState ) => {
+    const updateRoot = newRoot => {
+        root = newRoot;
+    }
+
+    const redraw = newState => {
         const rendered = draw( newState );
 
-        if ( mounted.nodeName !== rendered.nodeName ) {
-            mounted.replaceWith( rendered );
-            return rendered;
+        if ( root.nodeName !== rendered.nodeName ) {
+            root.replaceWith( rendered );
+            updateRoot( rendered );
         }
         else {
-            mounted.querySelectorAll( ".component" ).forEach(
-                mounted => {
-                    mounted.unmount( mounted, mounted.handler );
-                    mounted.handler = undefined;
-                    mounted.mount = undefined;
-                    mounted.unmount = undefined;
+            root.querySelectorAll( ".component" ).forEach(
+                component => {
+                    component.unmount( component.eventHandler );
+                    component.updateRoot = undefined;
+                    component.eventHandler = undefined;
+                    component.mount = undefined;
+                    component.unmount = undefined;
                 }
             );
 
-            morphdom( mounted, rendered.cloneNode( true ) );
+            morphdom( root, rendered.cloneNode( true ) );
 
             const components = rendered.querySelectorAll( ".component" );
-            mounted.querySelectorAll( ".component" ).forEach(
-                ( mounted, index ) => {
-                    mounted.handler = components[index].mount( mounted );
-                    mounted.mount = components[index].mount;
-                    mounted.unmount = components[index].unmount;
+            root.querySelectorAll( ".component" ).forEach(
+                ( component, index ) => {
+                    component.updateRoot = components[index].updateRoot;
+                    component.eventHandler = components[index].eventHandler;
+                    component.mount = components[index].mount;
+                    component.unmount = components[index].unmount;
+
+                    component.updateRoot( component );
+                    component.mount( component.eventHandler );
                 } );
-            return mounted;
         }
     }
 
-    const maybeDispatchEvent = ( node, oldState ) => {
+    const maybeDispatchEvent = oldState => {
         if ( triggerEvent ) {
             const event = triggerEvent( oldState, state );
             if ( event ) {
-                node.dispatchEvent( event );
+                root.dispatchEvent( event );
             }
         }
     }
 
-    const handler = function ( event ) {
+    const maybeStateChanged = newState => {
+        if ( newState !== state ) {
+            redraw( newState );
+            const oldState = state;
+            state = newState;
+            maybeDispatchEvent( oldState );
+        }
+    }
+
+    const eventHandler = function ( event ) {
         if ( !events.hasOwnProperty( event.type ) ) {
             return;
         }
@@ -62,35 +80,28 @@ const component = (
         event.preventDefault();
         event.stopImmediatePropagation();
 
-        let newState = events[event.type]( state, event );
-        if ( newState !== state ) {
-            const node = redraw( this, newState );
-            const oldState = state;
-            state = newState;
-            maybeDispatchEvent( node, oldState );
-        }
+        maybeStateChanged(
+            events[event.type]( state, event ) );
     };
 
-    const mount = ( node ) => {
-        const h = handler.bind( node );
+    const mount = eventHandler => {
         for ( let event in events ) {
             if ( events.hasOwnProperty( event ) ) {
                 const target = is_global_event( event )
                     ? window
-                    : node;
-                target.addEventListener( event, h, true );
+                    : root;
+                target.addEventListener( event, eventHandler, true );
             }
         }
-        return h;
     }
 
-    const unmount = ( node, handler ) => {
+    const unmount = eventHandler => {
         for ( let event in events ) {
             if ( events.hasOwnProperty( event ) ) {
                 const target = is_global_event( event )
                     ? window
-                    : node;
-                target.removeEventListener( event, handler, true );
+                    : root;
+                target.removeEventListener( event, eventHandler, true );
             }
         }
     }
@@ -98,7 +109,8 @@ const component = (
     const draw = state => {
         const rendered = render( state );
         rendered.classList.add( "component" );
-        rendered.handler = mount( rendered );
+        rendered.eventHandler = eventHandler;
+        rendered.updateRoot = updateRoot;
         rendered.mount = mount;
         rendered.unmount = unmount;
         return rendered;
@@ -109,8 +121,10 @@ const component = (
         if ( state !== newState ) {
             state = newState;
         }
-        return draw( state );
+        updateRoot( draw( state ) );
+        mount( eventHandler );
+        return root;
     }
-};
+}
 
 export default component;
