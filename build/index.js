@@ -17,7 +17,11 @@ var component = function component(initialState, render, _ref) {
       return state;
     } : _ref$updateOptions,
     _ref$triggerEvent = _ref.triggerEvent,
-    triggerEvent = _ref$triggerEvent === void 0 ? false : _ref$triggerEvent;
+    triggerEvent = _ref$triggerEvent === void 0 ? false : _ref$triggerEvent,
+    _ref$sendHTTPMessage = _ref.sendHTTPMessage,
+    sendHTTPMessage = _ref$sendHTTPMessage === void 0 ? false : _ref$sendHTTPMessage,
+    _ref$receiveHTTPMessa = _ref.receiveHTTPMessage,
+    receiveHTTPMessage = _ref$receiveHTTPMessa === void 0 ? false : _ref$receiveHTTPMessa;
   var state = initialState;
   var root;
   var updateRoot = function updateRoot(newRoot) {
@@ -56,11 +60,26 @@ var component = function component(initialState, render, _ref) {
       }
     }
   };
+  var httpResponseHandler = function httpResponseHandler(response) {
+    maybeStateChanged(receiveHTTPMessage(state, response));
+  };
+  var maybeMakeRequest = function maybeMakeRequest(oldState) {
+    if (sendHTTPMessage) {
+      var request = sendHTTPMessage(oldState, state);
+      if (request) {
+        var promise = fetch(request);
+        if (receiveHTTPMessage) {
+          promise.then(httpResponseHandler);
+        }
+      }
+    }
+  };
   var maybeStateChanged = function maybeStateChanged(newState) {
     if (newState !== state) {
       redraw(newState);
       var oldState = state;
       state = newState;
+      maybeMakeRequest(oldState);
       maybeDispatchEvent(oldState);
     }
   };

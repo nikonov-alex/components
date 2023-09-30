@@ -11,6 +11,8 @@ const component = (
         events = { },
         updateOptions = ( state, options ) => state,
         triggerEvent = false,
+        sendHTTPMessage = false,
+        receiveHTTPMessage = false
     }
 ) => {
     let state = initialState;
@@ -63,11 +65,28 @@ const component = (
         }
     }
 
+    const httpResponseHandler = response => {
+        maybeStateChanged( receiveHTTPMessage( state, response ) );
+    }
+
+    const maybeMakeRequest = oldState => {
+        if ( sendHTTPMessage ) {
+            const request = sendHTTPMessage( oldState, state );
+            if ( request ) {
+                const promise = fetch( request );
+                if ( receiveHTTPMessage ) {
+                    promise.then( httpResponseHandler );
+                }
+            }
+        }
+    }
+
     const maybeStateChanged = newState => {
         if ( newState !== state ) {
             redraw( newState );
             const oldState = state;
             state = newState;
+            maybeMakeRequest( oldState );
             maybeDispatchEvent( oldState );
         }
     }
