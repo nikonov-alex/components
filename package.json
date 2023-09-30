@@ -2,8 +2,7 @@
   "name": "@nikonov-alex/components",
   "version": "0.0.2",
   "description": "Components library inspired by HTDP book",
-  "main": "index.js",
-  "type": "module",
+  "main": "build/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
