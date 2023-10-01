@@ -9,26 +9,26 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 var is_global_event = function is_global_event(name) {
   return ["hashchange", "popstate"].includes(name);
 };
-var component = function component(initialState, render, _ref) {
-  var _ref$events = _ref.events,
-    events = _ref$events === void 0 ? {} : _ref$events,
-    _ref$updateOptions = _ref.updateOptions,
-    updateOptions = _ref$updateOptions === void 0 ? function (state, options) {
+var component = function component(initialState, render, opts) {
+  var _opts$events = opts.events,
+    events = _opts$events === void 0 ? {} : _opts$events,
+    _opts$updateOptions = opts.updateOptions,
+    updateOptions = _opts$updateOptions === void 0 ? function (state, options) {
       return state;
-    } : _ref$updateOptions,
-    _ref$triggerEvent = _ref.triggerEvent,
-    triggerEvent = _ref$triggerEvent === void 0 ? false : _ref$triggerEvent,
-    _ref$sendHTTPMessage = _ref.sendHTTPMessage,
-    sendHTTPMessage = _ref$sendHTTPMessage === void 0 ? false : _ref$sendHTTPMessage,
-    _ref$receiveHTTPMessa = _ref.receiveHTTPMessage,
-    receiveHTTPMessage = _ref$receiveHTTPMessa === void 0 ? false : _ref$receiveHTTPMessa;
+    } : _opts$updateOptions,
+    _opts$triggerEvent = opts.triggerEvent,
+    triggerEvent = _opts$triggerEvent === void 0 ? false : _opts$triggerEvent,
+    _opts$sendHTTPMessage = opts.sendHTTPMessage,
+    sendHTTPMessage = _opts$sendHTTPMessage === void 0 ? false : _opts$sendHTTPMessage,
+    _opts$receiveHTTPMess = opts.receiveHTTPMessage,
+    receiveHTTPMessage = _opts$receiveHTTPMess === void 0 ? false : _opts$receiveHTTPMess;
   var state = initialState;
   var root;
   var updateRoot = function updateRoot(newRoot) {
     root = newRoot;
   };
   var redraw = function redraw(newState) {
-    var rendered = draw(newState);
+    var rendered = _draw(newState);
     if (root.nodeName !== rendered.nodeName) {
       root.replaceWith(rendered);
       updateRoot(rendered);
@@ -107,7 +107,7 @@ var component = function component(initialState, render, _ref) {
       }
     }
   };
-  var draw = function draw(state) {
+  var _draw = function draw(state) {
     var rendered = render(state);
     rendered.classList.add("component");
     rendered.eventHandler = eventHandler;
@@ -116,15 +116,16 @@ var component = function component(initialState, render, _ref) {
     rendered.unmount = unmount;
     return rendered;
   };
-  return function () {
-    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-    var newState = updateOptions(state, options);
-    if (state !== newState) {
-      state = newState;
+  return {
+    update: function update(options) {
+      var newState = updateOptions(state, options);
+      return component(newState, render, opts);
+    },
+    draw: function draw() {
+      updateRoot(_draw(state));
+      mount(eventHandler);
+      return root;
     }
-    updateRoot(draw(state));
-    mount(eventHandler);
-    return root;
   };
 };
 var _default = component;

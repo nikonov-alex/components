@@ -7,14 +7,16 @@ const is_global_event = name =>
 const component = (
     initialState,
     render,
-    {
+    opts
+) => {
+    const {
         events = { },
         updateOptions = ( state, options ) => state,
         triggerEvent = false,
         sendHTTPMessage = false,
         receiveHTTPMessage = false
-    }
-) => {
+    } = opts;
+
     let state = initialState;
     let root;
 
@@ -135,15 +137,17 @@ const component = (
         return rendered;
     }
 
-    return ( options = null ) => {
-        const newState = updateOptions( state, options );
-        if ( state !== newState ) {
-            state = newState;
+    return {
+        update: ( options ) => {
+            const newState = updateOptions( state, options );
+            return component( newState, render, opts );
+        },
+        draw: () => {
+            updateRoot( draw( state ) );
+            mount( eventHandler );
+            return root;
         }
-        updateRoot( draw( state ) );
-        mount( eventHandler );
-        return root;
-    }
+    };
 }
 
 export default component;
