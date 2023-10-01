@@ -124,5 +124,5 @@ var update_component = function (component, options) {
         ? component
         : make_component(component["_updateOptions"](component["_state"], options), component["_render"], component["_opts"]);
 };
-export { make_component, draw_component, update_component };
+export { make_component, draw_component, update_component, Component };
 //# sourceMappingURL=index.js.map

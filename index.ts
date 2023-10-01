@@ -1,6 +1,6 @@
 import morphdom from "morphdom";
 
-const is_global_event = ( name: string ) =>
+const is_global_event = ( name: string ): boolean =>
     [ "hashchange", "popstate" ].includes( name );
 
 type RenderFunc<State> = { ( s: State ): HTMLElement };
@@ -144,7 +144,7 @@ class Component<State> {
         }
     }
 
-    _draw( state: State ) {
+    _draw( state: State ): HTMLElement {
         const rendered = this._render( state );
         rendered.classList.add( "component" );
         // @ts-ignore
@@ -154,16 +154,16 @@ class Component<State> {
 
 }
 
-const make_component = <State>( initialState: State, render: RenderFunc<State>, opts: Options<State> ) =>
+const make_component = <State>( initialState: State, render: RenderFunc<State>, opts: Options<State> ): Component<State> =>
     new Component( initialState, render, opts )
 
-const draw_component = <State>( component: Component<State> ) => {
+const draw_component = <State>( component: Component<State> ): HTMLElement => {
     component["_root"] = component._draw( component["_state"] );
     component._mount();
     return component["_root"];
 }
 
-const update_component = <State>( component: Component<State>, options: object ) =>
+const update_component = <State>( component: Component<State>, options: object ): Component<State> =>
     !component["_updateOptions"]
         ? component
         : make_component(
@@ -174,4 +174,4 @@ const update_component = <State>( component: Component<State>, options: object )
 
 
 
-export { make_component, draw_component, update_component };
+export { make_component, draw_component, update_component, Component };
