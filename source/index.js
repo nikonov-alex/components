@@ -1,153 +1,146 @@
 import morphdom from "morphdom";
 
-
 const is_global_event = name =>
     [ "hashchange", "popstate" ].includes( name );
 
-const component = (
-    initialState,
-    render,
-    opts
-) => {
-    const {
-        events = { },
-        updateOptions = ( state, options ) => state,
-        triggerEvent = false,
-        sendHTTPMessage = false,
-        receiveHTTPMessage = false
-    } = opts;
+class Component {
 
-    let state = initialState;
-    let root;
-
-    const updateRoot = newRoot => {
-        root = newRoot;
+    constructor( initialState, render, opts ) {
+        this._state = initialState, // todo: need deep clone here
+        this._root = null,
+        this._render = render,
+        this._events = opts.events ?? { },
+        this._updateOptions = opts.updateOptions,
+        this._triggerEvent = opts.triggerEvent,
+        this._sendHTTPMessage = opts.sendHTTPMessage,
+        this._receiveHTTPMessage = opts.receiveHTTPMessage,
+        this._opts = opts;
     }
 
-    const redraw = newState => {
-        const rendered = draw( newState );
+    _redraw( newState ) {
+        const rendered = this._draw( newState );
 
-        if ( root.nodeName !== rendered.nodeName ) {
-            root.replaceWith( rendered );
-            updateRoot( rendered );
+        if ( this._root.nodeName !== rendered.nodeName ) {
+            this._root.replaceWith( rendered );
+            this._root = rendered;
         }
         else {
-            root.querySelectorAll( ".component" ).forEach(
-                component => {
-                    component.unmount( component.eventHandler );
-                    component.updateRoot = undefined;
-                    component.eventHandler = undefined;
-                    component.mount = undefined;
-                    component.unmount = undefined;
+            this._root.querySelectorAll( ".component" ).forEach(
+                node => {
+                    node.component._unmount();
+                    delete node.component;
                 }
             );
 
-            morphdom( root, rendered.cloneNode( true ) );
+            morphdom( this._root, rendered.cloneNode( true ) );
 
             const components = rendered.querySelectorAll( ".component" );
-            root.querySelectorAll( ".component" ).forEach(
-                ( component, index ) => {
-                    component.updateRoot = components[index].updateRoot;
-                    component.eventHandler = components[index].eventHandler;
-                    component.mount = components[index].mount;
-                    component.unmount = components[index].unmount;
-
-                    component.updateRoot( component );
-                    component.mount( component.eventHandler );
+            this._root.querySelectorAll( ".component" ).forEach(
+                ( node, index ) => {
+                    node.component = components[index].component;
+                    node.component._root = node;
+                    node.component._mount();
                 } );
         }
     }
 
-    const maybeDispatchEvent = oldState => {
-        if ( triggerEvent ) {
-            const event = triggerEvent( oldState, state );
+    _maybeDispatchEvent ( oldState ) {
+        if ( this._triggerEvent ) {
+            const event = this._triggerEvent( oldState, this._state );
             if ( event ) {
-                root.dispatchEvent( event );
+                this._root.dispatchEvent( event );
             }
         }
     }
 
-    const httpResponseHandler = response => {
-        maybeStateChanged( receiveHTTPMessage( state, response ) );
+    _httpResponseHandler = response => {
+        this._maybeStateChanged(
+            this._receiveHTTPMessage( this._state, response ) );
     }
 
-    const maybeMakeRequest = oldState => {
-        if ( sendHTTPMessage ) {
-            const request = sendHTTPMessage( oldState, state );
+    _maybeMakeRequest( oldState ) {
+        if ( this._sendHTTPMessage ) {
+            const request = this._sendHTTPMessage( oldState, this._state );
             if ( request ) {
                 const promise = fetch( request );
-                if ( receiveHTTPMessage ) {
-                    promise.then( httpResponseHandler );
+                if ( this._receiveHTTPMessage ) {
+                    promise.then( this._httpResponseHandler );
                 }
             }
         }
     }
 
-    const maybeStateChanged = newState => {
-        if ( newState !== state ) {
-            redraw( newState );
-            const oldState = state;
-            state = newState;
-            maybeMakeRequest( oldState );
-            maybeDispatchEvent( oldState );
+    _maybeStateChanged( newState ) {
+        if ( newState !== this._state ) {
+            this._redraw( newState );
+            const oldState = this._state;
+            this._state = newState;
+            this._maybeMakeRequest( oldState );
+            this._maybeDispatchEvent( oldState );
         }
     }
 
-    const eventHandler = function ( event ) {
-        if ( !events.hasOwnProperty( event.type ) ) {
+    _eventHandler = event => {
+        if ( !this._events.hasOwnProperty( event.type ) ) {
             return;
         }
 
         event.preventDefault();
         event.stopImmediatePropagation();
 
-        maybeStateChanged(
-            events[event.type]( state, event ) );
-    };
+        this._maybeStateChanged(
+            this._events[event.type]( this._state, event ) );
+    }
 
-    const mount = eventHandler => {
-        for ( let event in events ) {
-            if ( events.hasOwnProperty( event ) ) {
+    _mount() {
+        for ( let event in this._events ) {
+            if ( this._events.hasOwnProperty( event ) ) {
                 const target = is_global_event( event )
                     ? window
-                    : root;
-                target.addEventListener( event, eventHandler, true );
+                    : this._root;
+                target.addEventListener( event, this._eventHandler, true );
             }
         }
     }
 
-    const unmount = eventHandler => {
-        for ( let event in events ) {
-            if ( events.hasOwnProperty( event ) ) {
+    _unmount(){
+        for ( let event in this._events ) {
+            if ( this._events.hasOwnProperty( event ) ) {
                 const target = is_global_event( event )
                     ? window
-                    : root;
-                target.removeEventListener( event, eventHandler, true );
+                    : this._root;
+                target.removeEventListener( event, this._eventHandler, true );
             }
         }
     }
 
-    const draw = state => {
-        const rendered = render( state );
+    _draw( state ) {
+        const rendered = this._render( state );
         rendered.classList.add( "component" );
-        rendered.eventHandler = eventHandler;
-        rendered.updateRoot = updateRoot;
-        rendered.mount = mount;
-        rendered.unmount = unmount;
+        rendered.component = this;
         return rendered;
     }
 
-    return {
-        update: ( options ) => {
-            const newState = updateOptions( state, options );
-            return component( newState, render, opts );
-        },
-        draw: () => {
-            updateRoot( draw( state ) );
-            mount( eventHandler );
-            return root;
-        }
-    };
 }
 
-export default component;
+const make_component = ( initialState, render, opts ) =>
+    new Component( initialState, render, opts )
+
+const draw_component = component => {
+    component._root = component._draw( component._state );
+    component._mount();
+    return component._root;
+}
+
+const update_component = ( component, options ) =>
+    !component._updateOptions
+        ? component
+        : make_component(
+            component._updateOptions( component._state, options ),
+            component._render,
+            component._opts
+        );
+
+
+
+export { make_component, draw_component, update_component };
