@@ -19,5 +19,8 @@
   "homepage": "https://github.com/nikonov-alex/components#readme",
   "dependencies": {
     "morphdom": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.23"
   }
 }
