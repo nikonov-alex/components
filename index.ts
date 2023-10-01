@@ -1,8 +1,9 @@
 import morphdom from "morphdom";
-import { JSX } from "react";
 
 const is_global_event = ( name: string ): boolean =>
     [ "hashchange", "popstate" ].includes( name );
+
+type RenderFunc<State> = { ( s: State ): Element };
 
 type Events<State> = { [k: string]: { (s: State, e: Event): State } };
 
@@ -28,7 +29,7 @@ class Component<State> {
 
     constructor(
         initialState: State,
-        private _render: { ( s: State ): Element },
+        private _render: RenderFunc<State>,
         opts: Options<State>
     ) {
         this._state = initialState, // todo: need deep clone here
@@ -153,8 +154,7 @@ class Component<State> {
 
 }
 
-const make_component = <State>( initialState: State, render: { ( s: State ): JSX.Element }, opts: Options<State> ): Component<State> =>
-    // @ts-ignore
+const make_component = <State>( initialState: State, render: RenderFunc<State>, opts: Options<State> ): Component<State> =>
     new Component( initialState, render, opts )
 
 const draw_component = <State>( component: Component<State> ): Element => {
