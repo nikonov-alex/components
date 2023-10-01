@@ -1,14 +1,38 @@
 import morphdom from "morphdom";
 
-const is_global_event = name =>
+const is_global_event = ( name: string ) =>
     [ "hashchange", "popstate" ].includes( name );
 
-class Component {
+type RenderFunc<State> = { ( s: State ): HTMLElement };
 
-    constructor( initialState, render, opts ) {
+type Events<State> = { [k: string]: { (s: State, e: Event): State } };
+
+type Options<State> = {
+    events?: Events<State>,
+    updateOptions?: { ( s: State, o: object ): State },
+    triggerEvent?: { ( os: State, ns: State ): Event | null }
+    sendHTTPMessage?: { ( os: State, ns: State ): Request | null }
+    receiveHTTPMessage?: { ( s: State, m: Response ): State }
+};
+
+class Component<State> {
+
+    private _state: State;
+    private _root: HTMLElement = document.createElement( "div" );
+    private _events;
+    private _updateOptions;
+    private _triggerEvent;
+    private _sendHTTPMessage;
+    private _receiveHTTPMessage;
+    private _opts;
+
+
+    constructor(
+        initialState: State,
+        private _render: RenderFunc<State>,
+        opts: Options<State>
+    ) {
         this._state = initialState, // todo: need deep clone here
-        this._root = null,
-        this._render = render,
         this._events = opts.events ?? { },
         this._updateOptions = opts.updateOptions,
         this._triggerEvent = opts.triggerEvent,
@@ -17,7 +41,7 @@ class Component {
         this._opts = opts;
     }
 
-    _redraw( newState ) {
+    _redraw( newState: State ) {
         const rendered = this._draw( newState );
 
         if ( this._root.nodeName !== rendered.nodeName ) {
@@ -27,7 +51,9 @@ class Component {
         else {
             this._root.querySelectorAll( ".component" ).forEach(
                 node => {
+                    // @ts-ignore
                     node.component._unmount();
+                    // @ts-ignore
                     delete node.component;
                 }
             );
@@ -37,14 +63,17 @@ class Component {
             const components = rendered.querySelectorAll( ".component" );
             this._root.querySelectorAll( ".component" ).forEach(
                 ( node, index ) => {
+                    // @ts-ignore
                     node.component = components[index].component;
+                    // @ts-ignore
                     node.component._root = node;
+                    // @ts-ignore
                     node.component._mount();
                 } );
         }
     }
 
-    _maybeDispatchEvent ( oldState ) {
+    _maybeDispatchEvent ( oldState: State ) {
         if ( this._triggerEvent ) {
             const event = this._triggerEvent( oldState, this._state );
             if ( event ) {
@@ -53,12 +82,13 @@ class Component {
         }
     }
 
-    _httpResponseHandler = response => {
+    _httpResponseHandler = ( response: Response ) => {
         this._maybeStateChanged(
+            // @ts-ignore
             this._receiveHTTPMessage( this._state, response ) );
     }
 
-    _maybeMakeRequest( oldState ) {
+    _maybeMakeRequest( oldState: State ) {
         if ( this._sendHTTPMessage ) {
             const request = this._sendHTTPMessage( oldState, this._state );
             if ( request ) {
@@ -70,7 +100,7 @@ class Component {
         }
     }
 
-    _maybeStateChanged( newState ) {
+    _maybeStateChanged( newState: State ) {
         if ( newState !== this._state ) {
             this._redraw( newState );
             const oldState = this._state;
@@ -80,7 +110,7 @@ class Component {
         }
     }
 
-    _eventHandler = event => {
+    _eventHandler = ( event: Event ) => {
         if ( !this._events.hasOwnProperty( event.type ) ) {
             return;
         }
@@ -114,31 +144,32 @@ class Component {
         }
     }
 
-    _draw( state ) {
+    _draw( state: State ) {
         const rendered = this._render( state );
         rendered.classList.add( "component" );
+        // @ts-ignore
         rendered.component = this;
         return rendered;
     }
 
 }
 
-const make_component = ( initialState, render, opts ) =>
+const make_component = <State>( initialState: State, render: RenderFunc<State>, opts: Options<State> ) =>
     new Component( initialState, render, opts )
 
-const draw_component = component => {
-    component._root = component._draw( component._state );
+const draw_component = <State>( component: Component<State> ) => {
+    component["_root"] = component._draw( component["_state"] );
     component._mount();
-    return component._root;
+    return component["_root"];
 }
 
-const update_component = ( component, options ) =>
-    !component._updateOptions
+const update_component = <State>( component: Component<State>, options: object ) =>
+    !component["_updateOptions"]
         ? component
         : make_component(
-            component._updateOptions( component._state, options ),
-            component._render,
-            component._opts
+            component["_updateOptions"]( component["_state"], options ),
+            component["_render"],
+            component["_opts"]
         );
 
 

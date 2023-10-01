@@ -1,8 +1,9 @@
 {
   "name": "@nikonov-alex/components",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Components library inspired by HTDP book",
-  "main": "build/index.js",
+  "main": "index.js",
+  "types": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
