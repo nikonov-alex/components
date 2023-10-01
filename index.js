@@ -115,14 +115,24 @@ var make_component = function (initialState, render, opts) {
     return new Component(initialState, render, opts);
 };
 var draw_component = function (component) {
-    component["_root"] = component._draw(component["_state"]);
+    // @ts-ignore
+    component._root = component._draw(component._state);
+    // @ts-ignore
     component._mount();
-    return component["_root"];
+    // @ts-ignore
+    return component._root;
 };
 var update_component = function (component, options) {
-    return !component["_updateOptions"]
+    // @ts-ignore
+    return !component._updateOptions
         ? component
-        : make_component(component["_updateOptions"](component["_state"], options), component["_render"], component["_opts"]);
+        : make_component(
+        // @ts-ignore
+        component._updateOptions(component._state, options), 
+        // @ts-ignore
+        component._render, 
+        // @ts-ignore
+        component._opts);
 };
 export { make_component, draw_component, update_component, Component };
 //# sourceMappingURL=index.js.map

@@ -41,7 +41,7 @@ class Component<State> {
         this._opts = opts;
     }
 
-    _redraw( newState: State ) {
+    private _redraw( newState: State ) {
         const rendered = this._draw( newState );
 
         if ( this._root.nodeName !== rendered.nodeName ) {
@@ -73,7 +73,7 @@ class Component<State> {
         }
     }
 
-    _maybeDispatchEvent ( oldState: State ) {
+    private _maybeDispatchEvent ( oldState: State ) {
         if ( this._triggerEvent ) {
             const event = this._triggerEvent( oldState, this._state );
             if ( event ) {
@@ -82,13 +82,13 @@ class Component<State> {
         }
     }
 
-    _httpResponseHandler = ( response: Response ) => {
+    private _httpResponseHandler = ( response: Response ) => {
         this._maybeStateChanged(
             // @ts-ignore
             this._receiveHTTPMessage( this._state, response ) );
     }
 
-    _maybeMakeRequest( oldState: State ) {
+    private _maybeMakeRequest( oldState: State ) {
         if ( this._sendHTTPMessage ) {
             const request = this._sendHTTPMessage( oldState, this._state );
             if ( request ) {
@@ -100,7 +100,7 @@ class Component<State> {
         }
     }
 
-    _maybeStateChanged( newState: State ) {
+    private _maybeStateChanged( newState: State ) {
         if ( newState !== this._state ) {
             this._redraw( newState );
             const oldState = this._state;
@@ -110,7 +110,7 @@ class Component<State> {
         }
     }
 
-    _eventHandler = ( event: Event ) => {
+    private _eventHandler = ( event: Event ) => {
         if ( !this._events.hasOwnProperty( event.type ) ) {
             return;
         }
@@ -122,7 +122,7 @@ class Component<State> {
             this._events[event.type]( this._state, event ) );
     }
 
-    _mount() {
+    private _mount() {
         for ( let event in this._events ) {
             if ( this._events.hasOwnProperty( event ) ) {
                 const target = is_global_event( event )
@@ -133,7 +133,7 @@ class Component<State> {
         }
     }
 
-    _unmount(){
+    private _unmount(){
         for ( let event in this._events ) {
             if ( this._events.hasOwnProperty( event ) ) {
                 const target = is_global_event( event )
@@ -144,7 +144,7 @@ class Component<State> {
         }
     }
 
-    _draw( state: State ): HTMLElement {
+    private _draw( state: State ): HTMLElement {
         const rendered = this._render( state );
         rendered.classList.add( "component" );
         // @ts-ignore
@@ -158,18 +158,25 @@ const make_component = <State>( initialState: State, render: RenderFunc<State>, 
     new Component( initialState, render, opts )
 
 const draw_component = <State>( component: Component<State> ): HTMLElement => {
-    component["_root"] = component._draw( component["_state"] );
+    // @ts-ignore
+    component._root = component._draw( component._state );
+    // @ts-ignore
     component._mount();
-    return component["_root"];
+    // @ts-ignore
+    return component._root;
 }
 
 const update_component = <State>( component: Component<State>, options: object ): Component<State> =>
-    !component["_updateOptions"]
+    // @ts-ignore
+    !component._updateOptions
         ? component
         : make_component(
-            component["_updateOptions"]( component["_state"], options ),
-            component["_render"],
-            component["_opts"]
+            // @ts-ignore
+            component._updateOptions( component._state, options ),
+            // @ts-ignore
+            component._render,
+            // @ts-ignore
+            component._opts
         );
 
 
