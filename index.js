@@ -1,4 +1,8 @@
-import morphdom from "morphdom";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Component = exports.update_component = exports.draw_component = exports.make_component = void 0;
+var tslib_1 = require("tslib");
+var morphdom_1 = tslib_1.__importDefault(require("morphdom"));
 var is_global_event = function (name) {
     return ["hashchange", "popstate"].includes(name);
 };
@@ -42,7 +46,7 @@ var Component = /** @class */ (function () {
                 // @ts-ignore
                 delete node.component;
             });
-            morphdom(this._root, rendered.cloneNode(true));
+            (0, morphdom_1.default)(this._root, rendered.cloneNode(true));
             var components_1 = rendered.querySelectorAll(".component");
             this._root.querySelectorAll(".component").forEach(function (node, index) {
                 // @ts-ignore
@@ -111,9 +115,11 @@ var Component = /** @class */ (function () {
     };
     return Component;
 }());
+exports.Component = Component;
 var make_component = function (initialState, render, opts) {
     return new Component(initialState, render, opts);
 };
+exports.make_component = make_component;
 var draw_component = function (component) {
     // @ts-ignore
     component._root = component._draw(component._state);
@@ -122,6 +128,7 @@ var draw_component = function (component) {
     // @ts-ignore
     return component._root;
 };
+exports.draw_component = draw_component;
 var update_component = function (component, options) {
     // @ts-ignore
     return !component._updateOptions
@@ -134,5 +141,5 @@ var update_component = function (component, options) {
         // @ts-ignore
         component._opts);
 };
-export { make_component, draw_component, update_component, Component };
+exports.update_component = update_component;
 //# sourceMappingURL=index.js.map
