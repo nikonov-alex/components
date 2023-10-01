@@ -3,7 +3,7 @@ import morphdom from "morphdom";
 const is_global_event = ( name: string ): boolean =>
     [ "hashchange", "popstate" ].includes( name );
 
-type RenderFunc<State> = { ( s: State ): Element };
+type RenderFunc<State> = { ( s: State ): HTMLElement };
 
 type Events<State> = { [k: string]: { (s: State, e: Event): State } };
 
@@ -18,7 +18,7 @@ type Options<State> = {
 class Component<State> {
 
     private _state: State;
-    private _root: Element = document.createElement( "div" );
+    private _root: HTMLElement = document.createElement( "div" );
     private _events;
     private _updateOptions;
     private _triggerEvent;
@@ -144,7 +144,7 @@ class Component<State> {
         }
     }
 
-    private _draw( state: State ): Element {
+    private _draw( state: State ): HTMLElement {
         const rendered = this._render( state );
         rendered.classList.add( "component" );
         // @ts-ignore
@@ -157,7 +157,7 @@ class Component<State> {
 const make_component = <State>( initialState: State, render: RenderFunc<State>, opts: Options<State> ): Component<State> =>
     new Component( initialState, render, opts )
 
-const draw_component = <State>( component: Component<State> ): Element => {
+const draw_component = <State>( component: Component<State> ): HTMLElement => {
     // @ts-ignore
     component._root = component._draw( component._state );
     // @ts-ignore
