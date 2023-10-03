@@ -9,7 +9,7 @@ var is_global_event = function (name) {
 var Component = /** @class */ (function () {
     function Component(initialState, _render, opts) {
         var _this = this;
-        var _a;
+        var _a, _b;
         this._render = _render;
         this._root = document.createElement("div");
         this._httpResponseHandler = function (response) {
@@ -27,13 +27,14 @@ var Component = /** @class */ (function () {
             event.stopImmediatePropagation();
             _this._maybeStateChanged(_this._events[event.type](_this._state, event));
         };
-        this._state = initialState, // todo: need deep clone here
-            this._events = (_a = opts.events) !== null && _a !== void 0 ? _a : {},
-            this._updateOptions = opts.updateOptions,
-            this._triggerEvent = opts.triggerEvent,
-            this._sendHTTPMessage = opts.sendHTTPMessage,
-            this._receiveHTTPMessage = opts.receiveHTTPMessage,
-            this._opts = opts;
+        this._state = initialState; // todo: need deep clone here
+        this._events = (_a = opts.events) !== null && _a !== void 0 ? _a : {};
+        this._updateOptions = opts.updateOptions;
+        this._triggerEvent = opts.triggerEvent;
+        this._sendHTTPMessage = opts.sendHTTPMessage;
+        this._receiveHTTPMessage = opts.receiveHTTPMessage;
+        this._captureEvents = (_b = opts.captureEvents) !== null && _b !== void 0 ? _b : false;
+        this._opts = opts;
     }
     Component.prototype._redraw = function (newState) {
         var rendered = this._draw(newState);
@@ -94,7 +95,7 @@ var Component = /** @class */ (function () {
                 var target = is_global_event(event_2)
                     ? window
                     : this._root;
-                target.addEventListener(event_2, this._eventHandler, true);
+                target.addEventListener(event_2, this._eventHandler, this._captureEvents);
             }
         }
     };
@@ -104,7 +105,7 @@ var Component = /** @class */ (function () {
                 var target = is_global_event(event_3)
                     ? window
                     : this._root;
-                target.removeEventListener(event_3, this._eventHandler, true);
+                target.removeEventListener(event_3, this._eventHandler, this._captureEvents);
             }
         }
     };

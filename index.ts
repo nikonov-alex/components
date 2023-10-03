@@ -12,7 +12,8 @@ type Options<State> = {
     updateOptions?: { ( s: State, o: object ): State },
     triggerEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State, ns: State ): Request | null }
-    receiveHTTPMessage?: { ( s: State, m: Response ): State }
+    receiveHTTPMessage?: { ( s: State, m: Response ): State },
+    captureEvents?: boolean
 };
 
 class Component<State> {
@@ -24,6 +25,7 @@ class Component<State> {
     private _triggerEvent;
     private _sendHTTPMessage;
     private _receiveHTTPMessage;
+    private _captureEvents;
     private _opts;
 
 
@@ -32,12 +34,13 @@ class Component<State> {
         private _render: RenderFunc<State>,
         opts: Options<State>
     ) {
-        this._state = initialState, // todo: need deep clone here
-        this._events = opts.events ?? { },
-        this._updateOptions = opts.updateOptions,
-        this._triggerEvent = opts.triggerEvent,
-        this._sendHTTPMessage = opts.sendHTTPMessage,
-        this._receiveHTTPMessage = opts.receiveHTTPMessage,
+        this._state = initialState; // todo: need deep clone here
+        this._events = opts.events ?? { };
+        this._updateOptions = opts.updateOptions;
+        this._triggerEvent = opts.triggerEvent;
+        this._sendHTTPMessage = opts.sendHTTPMessage;
+        this._receiveHTTPMessage = opts.receiveHTTPMessage;
+        this._captureEvents = opts.captureEvents ?? false;
         this._opts = opts;
     }
 
@@ -130,7 +133,7 @@ class Component<State> {
                 const target = is_global_event( event )
                     ? window
                     : this._root;
-                target.addEventListener( event, this._eventHandler, true );
+                target.addEventListener( event, this._eventHandler, this._captureEvents );
             }
         }
     }
@@ -141,7 +144,7 @@ class Component<State> {
                 const target = is_global_event( event )
                     ? window
                     : this._root;
-                target.removeEventListener( event, this._eventHandler, true );
+                target.removeEventListener( event, this._eventHandler, this._captureEvents );
             }
         }
     }
