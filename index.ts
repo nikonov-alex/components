@@ -115,7 +115,9 @@ class Component<State> {
             return;
         }
 
-        event.preventDefault();
+        if ( [ "submit", "click" ].includes( event.type ) ) {
+            event.preventDefault();
+        }
         event.stopImmediatePropagation();
 
         this._maybeStateChanged(
