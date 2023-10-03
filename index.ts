@@ -49,7 +49,7 @@ class Component<State> {
             this._root = rendered;
         }
         else {
-            this._root.querySelectorAll( ".component" ).forEach(
+            this._root.querySelectorAll( ".na-component" ).forEach(
                 node => {
                     // @ts-ignore
                     node.component._unmount();
@@ -60,8 +60,8 @@ class Component<State> {
 
             morphdom( this._root, rendered.cloneNode( true ) );
 
-            const components = rendered.querySelectorAll( ".component" );
-            this._root.querySelectorAll( ".component" ).forEach(
+            const components = rendered.querySelectorAll( ".na-component" );
+            this._root.querySelectorAll( ".na-component" ).forEach(
                 ( node, index ) => {
                     // @ts-ignore
                     node.component = components[index].component;
@@ -148,7 +148,7 @@ class Component<State> {
 
     private _draw( state: State ): HTMLElement {
         const rendered = this._render( state );
-        rendered.classList.add( "component" );
+        rendered.classList.add( "na-component" );
         // @ts-ignore
         rendered.component = this;
         return rendered;

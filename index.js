@@ -42,15 +42,15 @@ var Component = /** @class */ (function () {
             this._root = rendered;
         }
         else {
-            this._root.querySelectorAll(".component").forEach(function (node) {
+            this._root.querySelectorAll(".na-component").forEach(function (node) {
                 // @ts-ignore
                 node.component._unmount();
                 // @ts-ignore
                 delete node.component;
             });
             (0, morphdom_1.default)(this._root, rendered.cloneNode(true));
-            var components_1 = rendered.querySelectorAll(".component");
-            this._root.querySelectorAll(".component").forEach(function (node, index) {
+            var components_1 = rendered.querySelectorAll(".na-component");
+            this._root.querySelectorAll(".na-component").forEach(function (node, index) {
                 // @ts-ignore
                 node.component = components_1[index].component;
                 // @ts-ignore
@@ -110,7 +110,7 @@ var Component = /** @class */ (function () {
     };
     Component.prototype._draw = function (state) {
         var rendered = this._render(state);
-        rendered.classList.add("component");
+        rendered.classList.add("na-component");
         // @ts-ignore
         rendered.component = this;
         return rendered;
