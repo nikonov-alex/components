@@ -21,7 +21,9 @@ var Component = /** @class */ (function () {
             if (!_this._events.hasOwnProperty(event.type)) {
                 return;
             }
-            event.preventDefault();
+            if (["submit", "click"].includes(event.type)) {
+                event.preventDefault();
+            }
             event.stopImmediatePropagation();
             _this._maybeStateChanged(_this._events[event.type](_this._state, event));
         };
