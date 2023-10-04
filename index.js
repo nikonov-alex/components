@@ -3,13 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Component = exports.update_component = exports.draw_component = exports.make_component = void 0;
 var tslib_1 = require("tslib");
 var morphdom_1 = tslib_1.__importDefault(require("morphdom"));
-var is_global_event = function (name) {
-    return ["hashchange", "popstate"].includes(name);
-};
 var Component = /** @class */ (function () {
     function Component(initialState, _render, opts) {
         var _this = this;
-        var _a, _b;
+        var _a, _b, _c;
         this._render = _render;
         this._root = document.createElement("div");
         this._httpResponseHandler = function (response) {
@@ -17,23 +14,30 @@ var Component = /** @class */ (function () {
             // @ts-ignore
             _this._receiveHTTPMessage(_this._state, response));
         };
-        this._eventHandler = function (event) {
-            if (!_this._events.hasOwnProperty(event.type)) {
+        this._localEventHandler = function (event) {
+            if (!_this._localEvents.hasOwnProperty(event.type)) {
                 return;
             }
             if (["submit", "click"].includes(event.type)) {
                 event.preventDefault();
             }
             event.stopImmediatePropagation();
-            _this._maybeStateChanged(_this._events[event.type](_this._state, event));
+            _this._maybeStateChanged(_this._localEvents[event.type](_this._state, event));
+        };
+        this._globalEventHandler = function (event) {
+            if (!_this._globalEvents.hasOwnProperty(event.type)) {
+                return;
+            }
+            _this._maybeStateChanged(_this._globalEvents[event.type](_this._state, event));
         };
         this._state = initialState; // todo: need deep clone here
-        this._events = (_a = opts.events) !== null && _a !== void 0 ? _a : {};
+        this._localEvents = (_a = opts.localEvents) !== null && _a !== void 0 ? _a : {};
+        this._globalEvents = (_b = opts.globalEvents) !== null && _b !== void 0 ? _b : {};
         this._updateOptions = opts.updateOptions;
         this._triggerEvent = opts.triggerEvent;
         this._sendHTTPMessage = opts.sendHTTPMessage;
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
-        this._captureEvents = (_b = opts.captureEvents) !== null && _b !== void 0 ? _b : false;
+        this._captureEvents = (_c = opts.captureEvents) !== null && _c !== void 0 ? _c : false;
         this._opts = opts;
     }
     Component.prototype._redraw = function (newState) {
@@ -65,7 +69,7 @@ var Component = /** @class */ (function () {
         if (this._triggerEvent) {
             var event_1 = this._triggerEvent(oldState, this._state);
             if (event_1) {
-                this._root.dispatchEvent(event_1);
+                window.dispatchEvent(event_1);
             }
         }
     };
@@ -90,22 +94,26 @@ var Component = /** @class */ (function () {
         }
     };
     Component.prototype._mount = function () {
-        for (var event_2 in this._events) {
-            if (this._events.hasOwnProperty(event_2)) {
-                var target = is_global_event(event_2)
-                    ? window
-                    : this._root;
-                target.addEventListener(event_2, this._eventHandler, this._captureEvents);
+        for (var event_2 in this._localEvents) {
+            if (this._localEvents.hasOwnProperty(event_2)) {
+                this._root.addEventListener(event_2, this._localEventHandler, this._captureEvents);
+            }
+        }
+        for (var event_3 in this._globalEvents) {
+            if (this._globalEvents.hasOwnProperty(event_3)) {
+                window.addEventListener(event_3, this._globalEventHandler, this._captureEvents);
             }
         }
     };
     Component.prototype._unmount = function () {
-        for (var event_3 in this._events) {
-            if (this._events.hasOwnProperty(event_3)) {
-                var target = is_global_event(event_3)
-                    ? window
-                    : this._root;
-                target.removeEventListener(event_3, this._eventHandler, this._captureEvents);
+        for (var event_4 in this._localEvents) {
+            if (this._localEvents.hasOwnProperty(event_4)) {
+                this._root.removeEventListener(event_4, this._localEventHandler, this._captureEvents);
+            }
+        }
+        for (var event_5 in this._globalEvents) {
+            if (this._globalEvents.hasOwnProperty(event_5)) {
+                this._root.removeEventListener(event_5, this._globalEventHandler, this._captureEvents);
             }
         }
     };

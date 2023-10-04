@@ -1,14 +1,12 @@
 import morphdom from "morphdom";
 
-const is_global_event = ( name: string ): boolean =>
-    [ "hashchange", "popstate" ].includes( name );
-
 type RenderFunc<State> = { ( s: State ): HTMLElement };
 
 type Events<State> = { [k: string]: { (s: State, e: Event): State } };
 
 type Options<State> = {
-    events?: Events<State>,
+    localEvents?: Events<State>,
+    globalEvents?: Events<State>,
     updateOptions?: { ( s: State, o: object ): State },
     triggerEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State, ns: State ): Request | null }
@@ -20,7 +18,8 @@ class Component<State> {
 
     private _state: State;
     private _root: HTMLElement = document.createElement( "div" );
-    private _events;
+    private _localEvents;
+    private _globalEvents;
     private _updateOptions;
     private _triggerEvent;
     private _sendHTTPMessage;
@@ -35,7 +34,8 @@ class Component<State> {
         opts: Options<State>
     ) {
         this._state = initialState; // todo: need deep clone here
-        this._events = opts.events ?? { };
+        this._localEvents = opts.localEvents ?? { };
+        this._globalEvents = opts.globalEvents ?? { };
         this._updateOptions = opts.updateOptions;
         this._triggerEvent = opts.triggerEvent;
         this._sendHTTPMessage = opts.sendHTTPMessage;
@@ -80,7 +80,7 @@ class Component<State> {
         if ( this._triggerEvent ) {
             const event = this._triggerEvent( oldState, this._state );
             if ( event ) {
-                this._root.dispatchEvent( event );
+                window.dispatchEvent( event );
             }
         }
     }
@@ -113,8 +113,8 @@ class Component<State> {
         }
     }
 
-    private _eventHandler = ( event: Event ) => {
-        if ( !this._events.hasOwnProperty( event.type ) ) {
+    private _localEventHandler = ( event: Event ) => {
+        if ( !this._localEvents.hasOwnProperty( event.type ) ) {
             return;
         }
 
@@ -124,27 +124,40 @@ class Component<State> {
         event.stopImmediatePropagation();
 
         this._maybeStateChanged(
-            this._events[event.type]( this._state, event ) );
+            this._localEvents[event.type]( this._state, event ) );
+    }
+
+    private _globalEventHandler = ( event: Event ) => {
+        if ( !this._globalEvents.hasOwnProperty( event.type ) ) {
+            return;
+        }
+
+        this._maybeStateChanged(
+            this._globalEvents[event.type]( this._state, event ) );
     }
 
     private _mount() {
-        for ( let event in this._events ) {
-            if ( this._events.hasOwnProperty( event ) ) {
-                const target = is_global_event( event )
-                    ? window
-                    : this._root;
-                target.addEventListener( event, this._eventHandler, this._captureEvents );
+        for ( let event in this._localEvents ) {
+            if ( this._localEvents.hasOwnProperty( event ) ) {
+                this._root.addEventListener( event, this._localEventHandler, this._captureEvents );
+            }
+        }
+        for ( let event in this._globalEvents ) {
+            if ( this._globalEvents.hasOwnProperty( event ) ) {
+                window.addEventListener( event, this._globalEventHandler, this._captureEvents );
             }
         }
     }
 
     private _unmount(){
-        for ( let event in this._events ) {
-            if ( this._events.hasOwnProperty( event ) ) {
-                const target = is_global_event( event )
-                    ? window
-                    : this._root;
-                target.removeEventListener( event, this._eventHandler, this._captureEvents );
+        for ( let event in this._localEvents ) {
+            if ( this._localEvents.hasOwnProperty( event ) ) {
+                this._root.removeEventListener( event, this._localEventHandler, this._captureEvents );
+            }
+        }
+        for ( let event in this._globalEvents ) {
+            if ( this._globalEvents.hasOwnProperty( event ) ) {
+                this._root.removeEventListener( event, this._globalEventHandler, this._captureEvents );
             }
         }
     }
