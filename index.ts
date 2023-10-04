@@ -9,7 +9,7 @@ type Options<State> = {
     globalEvents?: Events<State>,
     updateOptions?: { ( s: State, o: object ): State },
     triggerEvent?: { ( os: State, ns: State ): Event | null }
-    sendHTTPMessage?: { ( os: State, ns: State ): Request | null }
+    sendHTTPMessage?: { ( os: State | null, ns: State ): Request | null }
     receiveHTTPMessage?: { ( s: State, m: Response ): State },
     captureEvents?: boolean
 };
@@ -42,6 +42,7 @@ class Component<State> {
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
         this._captureEvents = opts.captureEvents ?? false;
         this._opts = opts;
+        this._maybeMakeRequest( null );
     }
 
     private _redraw( newState: State ) {
@@ -91,7 +92,7 @@ class Component<State> {
             this._receiveHTTPMessage( this._state, response ) );
     }
 
-    private _maybeMakeRequest( oldState: State ) {
+    private _maybeMakeRequest( oldState: State | null ) {
         if ( this._sendHTTPMessage ) {
             const request = this._sendHTTPMessage( oldState, this._state );
             if ( request ) {

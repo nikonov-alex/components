@@ -39,6 +39,7 @@ var Component = /** @class */ (function () {
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
         this._captureEvents = (_c = opts.captureEvents) !== null && _c !== void 0 ? _c : false;
         this._opts = opts;
+        this._maybeMakeRequest(null);
     }
     Component.prototype._redraw = function (newState) {
         var rendered = this._draw(newState);
