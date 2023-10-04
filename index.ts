@@ -8,7 +8,8 @@ type Options<State> = {
     localEvents?: Events<State>,
     globalEvents?: Events<State>,
     updateOptions?: { ( s: State, o: object ): State },
-    triggerEvent?: { ( os: State, ns: State ): Event | null }
+    triggerLocalEvent?: { ( os: State, ns: State ): Event | null }
+    triggerGlobalEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State | null, ns: State ): Request | null }
     receiveHTTPMessage?: { ( s: State, m: Response, text: string ): State },
     captureEvents?: boolean
@@ -21,7 +22,8 @@ class Component<State> {
     private _localEvents;
     private _globalEvents;
     private _updateOptions;
-    private _triggerEvent;
+    private _triggerLocalEvent;
+    private _triggerGlobalEvent;
     private _sendHTTPMessage;
     private _receiveHTTPMessage;
     private _captureEvents;
@@ -37,7 +39,8 @@ class Component<State> {
         this._localEvents = opts.localEvents ?? { };
         this._globalEvents = opts.globalEvents ?? { };
         this._updateOptions = opts.updateOptions;
-        this._triggerEvent = opts.triggerEvent;
+        this._triggerLocalEvent = opts.triggerLocalEvent;
+        this._triggerGlobalEvent = opts.triggerGlobalEvent;
         this._sendHTTPMessage = opts.sendHTTPMessage;
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
         this._captureEvents = opts.captureEvents ?? false;
@@ -78,8 +81,14 @@ class Component<State> {
     }
 
     private _maybeDispatchEvent ( oldState: State ) {
-        if ( this._triggerEvent ) {
-            const event = this._triggerEvent( oldState, this._state );
+        if ( this._triggerLocalEvent ) {
+            const event = this._triggerLocalEvent( oldState, this._state );
+            if ( event ) {
+                window.dispatchEvent( event );
+            }
+        }
+        if ( this._triggerGlobalEvent ) {
+            const event = this._triggerGlobalEvent( oldState, this._state );
             if ( event ) {
                 window.dispatchEvent( event );
             }

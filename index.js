@@ -36,7 +36,8 @@ var Component = /** @class */ (function () {
         this._localEvents = (_a = opts.localEvents) !== null && _a !== void 0 ? _a : {};
         this._globalEvents = (_b = opts.globalEvents) !== null && _b !== void 0 ? _b : {};
         this._updateOptions = opts.updateOptions;
-        this._triggerEvent = opts.triggerEvent;
+        this._triggerLocalEvent = opts.triggerLocalEvent;
+        this._triggerGlobalEvent = opts.triggerGlobalEvent;
         this._sendHTTPMessage = opts.sendHTTPMessage;
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
         this._captureEvents = (_c = opts.captureEvents) !== null && _c !== void 0 ? _c : false;
@@ -69,10 +70,16 @@ var Component = /** @class */ (function () {
         }
     };
     Component.prototype._maybeDispatchEvent = function (oldState) {
-        if (this._triggerEvent) {
-            var event_1 = this._triggerEvent(oldState, this._state);
+        if (this._triggerLocalEvent) {
+            var event_1 = this._triggerLocalEvent(oldState, this._state);
             if (event_1) {
                 window.dispatchEvent(event_1);
+            }
+        }
+        if (this._triggerGlobalEvent) {
+            var event_2 = this._triggerGlobalEvent(oldState, this._state);
+            if (event_2) {
+                window.dispatchEvent(event_2);
             }
         }
     };
@@ -97,26 +104,26 @@ var Component = /** @class */ (function () {
         }
     };
     Component.prototype._mount = function () {
-        for (var event_2 in this._localEvents) {
-            if (this._localEvents.hasOwnProperty(event_2)) {
-                this._root.addEventListener(event_2, this._localEventHandler, this._captureEvents);
+        for (var event_3 in this._localEvents) {
+            if (this._localEvents.hasOwnProperty(event_3)) {
+                this._root.addEventListener(event_3, this._localEventHandler, this._captureEvents);
             }
         }
-        for (var event_3 in this._globalEvents) {
-            if (this._globalEvents.hasOwnProperty(event_3)) {
-                window.addEventListener(event_3, this._globalEventHandler, this._captureEvents);
+        for (var event_4 in this._globalEvents) {
+            if (this._globalEvents.hasOwnProperty(event_4)) {
+                window.addEventListener(event_4, this._globalEventHandler, this._captureEvents);
             }
         }
     };
     Component.prototype._unmount = function () {
-        for (var event_4 in this._localEvents) {
-            if (this._localEvents.hasOwnProperty(event_4)) {
-                this._root.removeEventListener(event_4, this._localEventHandler, this._captureEvents);
+        for (var event_5 in this._localEvents) {
+            if (this._localEvents.hasOwnProperty(event_5)) {
+                this._root.removeEventListener(event_5, this._localEventHandler, this._captureEvents);
             }
         }
-        for (var event_5 in this._globalEvents) {
-            if (this._globalEvents.hasOwnProperty(event_5)) {
-                this._root.removeEventListener(event_5, this._globalEventHandler, this._captureEvents);
+        for (var event_6 in this._globalEvents) {
+            if (this._globalEvents.hasOwnProperty(event_6)) {
+                this._root.removeEventListener(event_6, this._globalEventHandler, this._captureEvents);
             }
         }
     };
