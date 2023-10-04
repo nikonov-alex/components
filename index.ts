@@ -10,7 +10,7 @@ type Options<State> = {
     updateOptions?: { ( s: State, o: object ): State },
     triggerEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State | null, ns: State ): Request | null }
-    receiveHTTPMessage?: { ( s: State, m: Response ): State },
+    receiveHTTPMessage?: { ( s: State, m: Response, text: string ): State },
     captureEvents?: boolean
 };
 
@@ -87,9 +87,11 @@ class Component<State> {
     }
 
     private _httpResponseHandler = ( response: Response ) => {
-        this._maybeStateChanged(
-            // @ts-ignore
-            this._receiveHTTPMessage( this._state, response ) );
+        response.text().then( body =>
+            this._maybeStateChanged(
+                // @ts-ignore
+                this._receiveHTTPMessage( this._state, response, body ) )
+        );
     }
 
     private _maybeMakeRequest( oldState: State | null ) {

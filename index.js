@@ -10,9 +10,11 @@ var Component = /** @class */ (function () {
         this._render = _render;
         this._root = document.createElement("div");
         this._httpResponseHandler = function (response) {
-            _this._maybeStateChanged(
-            // @ts-ignore
-            _this._receiveHTTPMessage(_this._state, response));
+            response.text().then(function (body) {
+                return _this._maybeStateChanged(
+                // @ts-ignore
+                _this._receiveHTTPMessage(_this._state, response, body));
+            });
         };
         this._localEventHandler = function (event) {
             if (!_this._localEvents.hasOwnProperty(event.type)) {
