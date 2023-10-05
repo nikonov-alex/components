@@ -84,7 +84,7 @@ class Component<State> {
         if ( this._triggerLocalEvent ) {
             const event = this._triggerLocalEvent( oldState, this._state );
             if ( event ) {
-                window.dispatchEvent( event );
+                this._root.dispatchEvent( event );
             }
         }
         if ( this._triggerGlobalEvent ) {

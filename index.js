@@ -73,7 +73,7 @@ var Component = /** @class */ (function () {
         if (this._triggerLocalEvent) {
             var event_1 = this._triggerLocalEvent(oldState, this._state);
             if (event_1) {
-                window.dispatchEvent(event_1);
+                this._root.dispatchEvent(event_1);
             }
         }
         if (this._triggerGlobalEvent) {
