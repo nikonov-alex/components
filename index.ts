@@ -4,10 +4,10 @@ type RenderFunc<State> = { ( s: State ): HTMLElement };
 
 type Events<State> = { [k: string]: { (s: State, e: Event): State } };
 
-type Options<State> = {
+type Options<State, Opts> = {
     localEvents?: Events<State>,
     globalEvents?: Events<State>,
-    updateOptions?: { <Opts extends object>( s: State, o: Opts ): State },
+    updateOptions?: { ( s: State, o: Opts ): State },
     triggerLocalEvent?: { ( os: State, ns: State ): Event | null }
     triggerGlobalEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State | null, ns: State ): Request | null }
@@ -15,7 +15,7 @@ type Options<State> = {
     captureEvents?: boolean
 };
 
-class Component<State> {
+class Component<State, Opts> {
 
     private _state: State;
     private _root: HTMLElement = document.createElement( "div" );
@@ -33,7 +33,7 @@ class Component<State> {
     constructor(
         initialState: State,
         private _render: RenderFunc<State>,
-        opts: Options<State>
+        opts: Options<State, Opts>
     ) {
         this._state = initialState; // todo: need deep clone here
         this._localEvents = opts.localEvents ?? { };
@@ -184,10 +184,10 @@ class Component<State> {
 
 }
 
-const make_component = <State>( initialState: State, render: RenderFunc<State>, opts: Options<State> ): Component<State> =>
-    new Component( initialState, render, opts )
+const make_component = <State, Opts>( initialState: State, render: RenderFunc<State>, opts: Options<State, Opts> ): Component<State, Opts> =>
+    new Component<State, Opts>( initialState, render, opts )
 
-const draw_component = <State>( component: Component<State> ): HTMLElement => {
+const draw_component = <State, Opts>( component: Component<State, Opts> ): HTMLElement => {
     // @ts-ignore
     component._root = component._draw( component._state );
     // @ts-ignore
@@ -196,12 +196,13 @@ const draw_component = <State>( component: Component<State> ): HTMLElement => {
     return component._root;
 }
 
-const update_component = <State, O extends object>( component: Component<State>, options: O ): Component<State> =>
+const update_component = <State, Opts>( component: Component<State, Opts>, options: Opts ): Component<State, Opts> =>
     // @ts-ignore
     !component._updateOptions
         ? component
-        : (( updateOptions ) => make_component(
-            updateOptions<O>(
+        : make_component(
+            // @ts-ignore
+            component._updateOptions(
                 // @ts-ignore
                 component._state,
                 options ),
@@ -209,8 +210,7 @@ const update_component = <State, O extends object>( component: Component<State>,
             component._render,
             // @ts-ignore
             component._opts
-        // @ts-ignore
-        ))( component._updateOptions );
+        );
 
 
 

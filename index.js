@@ -154,15 +154,15 @@ var update_component = function (component, options) {
     // @ts-ignore
     return !component._updateOptions
         ? component
-        : (function (updateOptions) { return make_component(updateOptions(
+        : make_component(
+        // @ts-ignore
+        component._updateOptions(
         // @ts-ignore
         component._state, options), 
         // @ts-ignore
         component._render, 
         // @ts-ignore
-        component._opts
-        // @ts-ignore
-        ); })(component._updateOptions);
+        component._opts);
 };
 exports.update_component = update_component;
 //# sourceMappingURL=index.js.map
