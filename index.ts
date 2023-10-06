@@ -196,7 +196,7 @@ const draw_component = <State>( component: Component<State> ): HTMLElement => {
     return component._root;
 }
 
-const update_component = <State>( component: Component<State>, options: object ): Component<State> =>
+const update_component = <State>( component: Component<State>, options: { [K in keyof State]: State[K] } ): Component<State> =>
     // @ts-ignore
     !component._updateOptions
         ? component
