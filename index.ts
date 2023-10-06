@@ -7,7 +7,7 @@ type Events<State> = { [k: string]: { (s: State, e: Event): State } };
 type Options<State> = {
     localEvents?: Events<State>,
     globalEvents?: Events<State>,
-    updateOptions?: { ( s: State, o: object ): State },
+    updateOptions?: { <Opts extends object>( s: State, o: Opts ): State },
     triggerLocalEvent?: { ( os: State, ns: State ): Event | null }
     triggerGlobalEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State | null, ns: State ): Request | null }
@@ -196,18 +196,21 @@ const draw_component = <State>( component: Component<State> ): HTMLElement => {
     return component._root;
 }
 
-const update_component = <State>( component: Component<State>, options: { [K in keyof State]: State[K] } ): Component<State> =>
+const update_component = <State, O extends object>( component: Component<State>, options: O ): Component<State> =>
     // @ts-ignore
     !component._updateOptions
         ? component
-        : make_component(
-            // @ts-ignore
-            component._updateOptions( component._state, options ),
+        : (( updateOptions ) => make_component(
+            updateOptions<O>(
+                // @ts-ignore
+                component._state,
+                options ),
             // @ts-ignore
             component._render,
             // @ts-ignore
             component._opts
-        );
+        // @ts-ignore
+        ))( component._updateOptions );
 
 
 
