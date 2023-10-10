@@ -4,6 +4,11 @@ type RenderFunc<State> = { ( s: State ): HTMLElement };
 
 type Events<State> = { [k: string]: { (s: State, e: Event): State } };
 
+
+const shouldRedraw = <State>( oldState: State, newState: State): boolean =>
+    oldState !== newState;
+
+
 type Options<State, Opts> = {
     localEvents?: Events<State>,
     globalEvents?: Events<State>,
@@ -12,7 +17,8 @@ type Options<State, Opts> = {
     triggerGlobalEvent?: { ( os: State, ns: State ): Event | null }
     sendHTTPMessage?: { ( os: State | null, ns: State ): Request | null }
     receiveHTTPMessage?: { ( s: State, m: Response, text: string ): State },
-    captureEvents?: boolean
+    captureEvents?: boolean,
+    shouldRedraw?: { ( os: State, ns: State ): boolean }
 };
 
 class Component<State, Opts> {
@@ -27,6 +33,7 @@ class Component<State, Opts> {
     private _sendHTTPMessage;
     private _receiveHTTPMessage;
     private _captureEvents;
+    private _shouldRedraw;
     private _opts;
 
 
@@ -44,6 +51,7 @@ class Component<State, Opts> {
         this._sendHTTPMessage = opts.sendHTTPMessage;
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
         this._captureEvents = opts.captureEvents ?? false;
+        this._shouldRedraw = opts.shouldRedraw ?? shouldRedraw;
         this._opts = opts;
         this._maybeMakeRequest( null );
     }
@@ -116,8 +124,10 @@ class Component<State, Opts> {
     }
 
     private _maybeStateChanged( newState: State ) {
-        if ( newState !== this._state ) {
-            this._redraw( newState );
+        if ( shouldRedraw( this._state, newState ) ) {
+            if ( this._shouldRedraw( this._state, newState ) ) {
+                this._redraw( newState );
+            }
             const oldState = this._state;
             this._state = newState;
             this._maybeMakeRequest( oldState );

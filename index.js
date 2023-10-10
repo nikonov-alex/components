@@ -3,10 +3,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Component = exports.update_component = exports.draw_component = exports.make_component = void 0;
 var tslib_1 = require("tslib");
 var morphdom_1 = tslib_1.__importDefault(require("morphdom"));
+var shouldRedraw = function (oldState, newState) {
+    return oldState !== newState;
+};
 var Component = /** @class */ (function () {
     function Component(initialState, _render, opts) {
         var _this = this;
-        var _a, _b, _c;
+        var _a, _b, _c, _d;
         this._render = _render;
         this._root = document.createElement("div");
         this._httpResponseHandler = function (response) {
@@ -41,6 +44,7 @@ var Component = /** @class */ (function () {
         this._sendHTTPMessage = opts.sendHTTPMessage;
         this._receiveHTTPMessage = opts.receiveHTTPMessage;
         this._captureEvents = (_c = opts.captureEvents) !== null && _c !== void 0 ? _c : false;
+        this._shouldRedraw = (_d = opts.shouldRedraw) !== null && _d !== void 0 ? _d : shouldRedraw;
         this._opts = opts;
         this._maybeMakeRequest(null);
     }
@@ -95,8 +99,10 @@ var Component = /** @class */ (function () {
         }
     };
     Component.prototype._maybeStateChanged = function (newState) {
-        if (newState !== this._state) {
-            this._redraw(newState);
+        if (shouldRedraw(this._state, newState)) {
+            if (this._shouldRedraw(this._state, newState)) {
+                this._redraw(newState);
+            }
             var oldState = this._state;
             this._state = newState;
             this._maybeMakeRequest(oldState);
